@@ -39,14 +39,18 @@ func main() {
 
 	// routes
 	router := gin.Default()
+
+	// middleware
+	protected := router.Group("", auth.Protect([]byte("==signature==")))
+
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "ponggggggg"})
 	})
 
-	handler := todo.NewTodoHandler(db)
-	router.POST("/todos", handler.NewTask)
+	router.GET("/token", auth.AccessToken("==signature=="))
 
-	router.GET("/token", auth.AccessToken)
+	handler := todo.NewTodoHandler(db)
+	protected.POST("/todos", handler.NewTask)
 
 	// listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 	router.Run()
