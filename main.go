@@ -1,7 +1,11 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/gin-gonic/gin" // web framework API
+	"github.com/joho/godotenv"
 	"github.com/nuttakarn-nj/golang-todo/auth"
 	"github.com/nuttakarn-nj/golang-todo/todo"
 	"gorm.io/driver/sqlite" // driver
@@ -9,6 +13,12 @@ import (
 )
 
 func main() {
+	// load env
+	err := godotenv.Load("local.env")
+	if err != nil {
+		log.Printf("please consider environment variables: %s\n", err)
+	}
+
 	// open connection
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 
@@ -41,13 +51,14 @@ func main() {
 	router := gin.Default()
 
 	// middleware
-	protected := router.Group("", auth.Protect([]byte("==signature==")))
+	signkey := os.Getenv("SIGN")
+	protected := router.Group("", auth.Protect([]byte(signkey)))
 
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "ponggggggg"})
 	})
 
-	router.GET("/token", auth.AccessToken("==signature=="))
+	router.GET("/token", auth.AccessToken(signkey))
 
 	handler := todo.NewTodoHandler(db)
 	protected.POST("/todos", handler.NewTask)
