@@ -17,7 +17,7 @@ func AccessToken(signature string) gin.HandlerFunc {
 		})
 
 		// Sign and get the complete encoded token as a string using the secret
-		tokenString, err := token.SignedString(signature)
+		tokenString, err := token.SignedString([]byte(signature))
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
