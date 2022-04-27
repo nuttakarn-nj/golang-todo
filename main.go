@@ -18,6 +18,12 @@ import (
 	"gorm.io/gorm"          // ORM library for Golang
 )
 
+// variable for build cmd
+var (
+	buildcommit = "dev"
+	buildTime   = time.Now().String()
+)
+
 func main() {
 	// load env
 	err := godotenv.Load("local.env")
@@ -43,6 +49,14 @@ func main() {
 	protected := router.Group("", auth.Protect([]byte(signkey)))
 
 	// routes
+
+	router.GET("/x", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"buildcommit": buildcommit,
+			"buildTime":   buildTime,
+		})
+	})
+
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "ponggggggg"})
 	})
