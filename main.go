@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin" // web framework API
 	"github.com/joho/godotenv"
@@ -30,30 +36,13 @@ func main() {
 	// Migrate the schema
 	db.AutoMigrate((&todo.Todo{}))
 
-	// Create
-	// db.Create(&Product{Code: "D42", Price: 100})
-
-	// Read
-	// var product Product
-	// db.First(&product, 1)                 // find product with integer primary key
-	// db.First(&product, "code = ?", "D42") // find product with code D42
-
-	// Update - update product's price to 200
-	// db.Model(&product).Update("Price", 200)
-	// Update - update multiple fields
-	// db.Model(&product).Updates(Product{Price: 200, Code: "F42"}) // non-zero fields
-	// db.Model(&product).Updates(map[string]interface{}{"Price": 200, "Code": "F42"})
-
-	// Delete - delete product
-	// db.Delete(&product, 1)
-
-	// routes
 	router := gin.Default()
 
 	// middleware
 	signkey := os.Getenv("SIGN")
 	protected := router.Group("", auth.Protect([]byte(signkey)))
 
+	// routes
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "ponggggggg"})
 	})
@@ -64,5 +53,42 @@ func main() {
 	protected.POST("/todos", handler.NewTask)
 
 	// listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
-	router.Run()
+	// router.Run()
+
+	// Graceful shutdown start
+	server := &http.Server{
+		Addr:           ":" + os.Getenv("PORT"),
+		Handler:        router,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	// handle signal
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	// goroutine
+	go func() {
+		err := server.ListenAndServe()
+
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// done when signal arrive
+	<-ctx.Done()
+	stop()
+	fmt.Println("shutting down gracefully, press Ctrl+C again to force")
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// shutdown
+	if server.Shutdown(timeoutCtx) != nil {
+		fmt.Println(err)
+	}
+
+	// Graceful shutdown end
 }
