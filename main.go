@@ -25,8 +25,16 @@ var (
 )
 
 func main() {
+	// liveness check
+	_, err := os.Create("/tmp/live")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove("/tmp/live") // remove before end program
+
 	// load env
-	err := godotenv.Load("local.env")
+	err = godotenv.Load("local.env")
 	if err != nil {
 		log.Printf("please consider environment variables: %s\n", err)
 	}
@@ -44,12 +52,16 @@ func main() {
 
 	router := gin.Default()
 
+	// realiness check
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{})
+	})
+
 	// middleware
 	signkey := os.Getenv("SIGN")
 	protected := router.Group("", auth.Protect([]byte(signkey)))
 
 	// routes
-
 	router.GET("/x", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"buildcommit": buildcommit,
