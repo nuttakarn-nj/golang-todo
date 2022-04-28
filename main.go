@@ -11,9 +11,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin" // web framework API
-	"github.com/joho/godotenv"
+	"github.com/joho/godotenv" // env
 	"github.com/nuttakarn-nj/golang-todo/auth"
 	"github.com/nuttakarn-nj/golang-todo/todo"
+	"golang.org/x/time/rate"
 	"gorm.io/driver/sqlite" // driver
 	"gorm.io/gorm"          // ORM library for Golang
 )
@@ -23,6 +24,20 @@ var (
 	buildcommit = "dev"
 	buildTime   = time.Now().String()
 )
+
+// rate limit
+var limiter = rate.NewLimiter(5, 5) // limit/sec and burst size 
+
+func limiterHandler(c *gin.Context) {
+	if !limiter.Allow() {
+		c.AbortWithStatus(http.StatusTooManyRequests)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "allowed",
+	})
+}
 
 func main() {
 	// liveness check
@@ -52,16 +67,19 @@ func main() {
 
 	router := gin.Default()
 
-	// realiness check
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{})
-	})
-
 	// middleware
 	signkey := os.Getenv("SIGN")
 	protected := router.Group("", auth.Protect([]byte(signkey)))
 
 	// routes
+	// realiness check
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{})
+	})
+
+	// limit chack
+	router.GET("/limit", limiterHandler)
+
 	router.GET("/x", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"buildcommit": buildcommit,

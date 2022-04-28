@@ -7,3 +7,6 @@ main
 cat /tmp/live
 echo $? >> 1 not normal (service not run)
 echo $? >> 0 normal (service is running)
+
+# Load test with vegeta
+echo "GET http://localhost:8080/limit" | vegeta attack -rate=10/s -duration=1s | vegeta report
