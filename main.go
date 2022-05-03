@@ -26,7 +26,7 @@ var (
 )
 
 // rate limit
-var limiter = rate.NewLimiter(5, 5) // limit/sec and burst size 
+var limiter = rate.NewLimiter(5, 5) // limit/sec and burst size
 
 func limiterHandler(c *gin.Context) {
 	if !limiter.Allow() {
@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// open connection
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(os.Getenv("DB_CON")), &gorm.Config{})
 
 	if err != nil {
 		// abort if a function returns an error value that we don’t know how to (or want to) handle
