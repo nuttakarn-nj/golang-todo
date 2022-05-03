@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +15,7 @@ func Protect(signature []byte) gin.HandlerFunc {
 		authorization := c.Request.Header.Get("Authorization")
 		tokenString := strings.TrimPrefix(authorization, "Bearer ")
 
-		_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			_, ok := token.Method.(*jwt.SigningMethodHMAC)
 
 			if !ok {
@@ -28,6 +28,12 @@ func Protect(signature []byte) gin.HandlerFunc {
 		if err != nil {
 			c.AbortWithStatus(http.StatusUnauthorized) // stop everything
 			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if ok {
+			aud := claims["aud"] // audian
+			c.Set("aud", aud)
 		}
 
 		c.Next() // next middleware

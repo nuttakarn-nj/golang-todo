@@ -14,6 +14,7 @@ func AccessToken(signature string) gin.HandlerFunc {
 		// you would like it to contain.
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
+			Audience:  "Nuttakarn", // hard code
 		})
 
 		// Sign and get the complete encoded token as a string using the secret
