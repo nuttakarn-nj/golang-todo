@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin" // web framework API
 	"github.com/joho/godotenv" // env
 	"github.com/nuttakarn-nj/golang-todo/auth"
@@ -66,6 +67,15 @@ func main() {
 	db.AutoMigrate((&todo.Todo{}))
 
 	router := gin.Default()
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{os.Getenv("UI_ENDPOINT")}
+	config.AllowHeaders = []string{
+		"Origin",
+		"Authorization",
+		"transactionID",
+	}
+
+	router.Use(cors.New(config))
 
 	// middleware
 	signkey := os.Getenv("SIGN")
@@ -95,6 +105,8 @@ func main() {
 
 	handler := todo.NewTodoHandler(db)
 	protected.POST("/todos", handler.NewTask)
+	protected.GET("/todos", handler.GetAllTasks)
+	protected.DELETE("/todos/:id", handler.Remove)
 
 	// listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 	// router.Run()
