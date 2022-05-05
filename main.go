@@ -16,7 +16,7 @@ import (
 	"github.com/nuttakarn-nj/golang-todo/auth"
 	"github.com/nuttakarn-nj/golang-todo/todo"
 	"golang.org/x/time/rate"
-	"gorm.io/driver/sqlite" // driver
+	"gorm.io/driver/mysql" // driver
 	"gorm.io/gorm"          // ORM library for Golang
 )
 
@@ -56,7 +56,7 @@ func main() {
 	}
 
 	// open connection
-	db, err := gorm.Open(sqlite.Open(os.Getenv("DB_CON")), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(os.Getenv("DB_CON")), &gorm.Config{})
 
 	if err != nil {
 		// abort if a function returns an error value that we don’t know how to (or want to) handle
