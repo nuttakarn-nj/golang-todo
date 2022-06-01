@@ -17,7 +17,7 @@ import (
 	"github.com/nuttakarn-nj/golang-todo/todo"
 	"golang.org/x/time/rate"
 	"gorm.io/driver/mysql" // driver
-	"gorm.io/gorm"          // ORM library for Golang
+	"gorm.io/gorm"         // ORM library for Golang
 )
 
 // variable for build cmd
@@ -73,6 +73,7 @@ func main() {
 		"Origin",
 		"Authorization",
 		"transactionID",
+		"Content-Type",
 	}
 
 	router.Use(cors.New(config))
